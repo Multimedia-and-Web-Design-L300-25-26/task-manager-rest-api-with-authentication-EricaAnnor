@@ -1,23 +1,42 @@
-name: Run Tests
+name: Node CI
 
 on:
   push:
+    branches: [ main, develop ]
   pull_request:
+    branches: [ main ]
 
 jobs:
   test:
     runs-on: ubuntu-latest
 
-    steps:
-      - uses: actions/checkout@v3
+    services:
+      mongo:
+        image: mongo
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd="mongosh --eval 'db.runCommand({ ping: 1 })'"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
 
-      - name: Setup Node
-        uses: actions/setup-node@v3
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20
 
       - name: Install dependencies
         run: npm install
+
+      - name: Create .env.test file
+        run: |
+          echo "MONGO_URI=mongodb://localhost:27017/taskmanager_test" >> .env.test
+          echo "JWT_SECRET=testsecret" >> .env.test
 
       - name: Run tests
         run: npm test
