@@ -2,24 +2,26 @@ import request from "supertest";
 import app from "../src/app.js";
 
 let token;
-let taskId;
 
-beforeAll(async () => {
+beforeEach(async () => {
+  const email = `task-${Date.now()}-${Math.floor(Math.random() * 10000)}@example.com`;
+  const password = "123456";
+
   // Register
   await request(app)
     .post("/api/auth/register")
     .send({
       name: "Task User",
-      email: "task@example.com",
-      password: "123456"
+      email,
+      password
     });
 
   // Login
   const res = await request(app)
     .post("/api/auth/login")
     .send({
-      email: "task@example.com",
-      password: "123456"
+      email,
+      password
     });
 
   token = res.body.token;
@@ -45,8 +47,6 @@ describe("Task Routes", () => {
 
     expect(res.statusCode).toBe(201);
     expect(res.body.title).toBe("Test Task");
-
-    taskId = res.body._id;
   });
 
   it("should get user tasks only", async () => {
